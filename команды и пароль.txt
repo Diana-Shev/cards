@@ -1,0 +1,3 @@
+новая база данных для этого проекта:
+CREATE USER goal_user WITH PASSWORD 'goal_pass';
+
