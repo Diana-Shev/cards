@@ -1,6 +1,11 @@
-from fastapi import FastAPI
+#подключает все роуты.
 
-app = FastAPI()
+from fastapi import FastAPI
+from .routers import router
+
+app = FastAPI(title="Мотивационные карточки")
+
+app.include_router(router)
 
 @app.get("/")
 def read_root():

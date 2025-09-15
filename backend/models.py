@@ -1,3 +1,5 @@
+#SQLAlchemy-модели (структура таблиц)
+
 from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey, Text, DateTime, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime
