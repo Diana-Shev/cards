@@ -1,10 +1,11 @@
 # основные роуты (эндпоинты) для пользователей, целей, карточек, избранного и ответов. 
 #Все адреса API (например, /users/, /goals/, /cards/ и т.д.).
 
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-import crud, models, schemas
+import crud
+import models
+import schemas
 from database import SessionLocal
 from typing import List
 

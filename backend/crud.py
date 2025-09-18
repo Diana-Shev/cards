@@ -2,7 +2,8 @@
 #Это логика, которая будет вызываться из роутов.
 
 from sqlalchemy.orm import Session
-from models, schemas
+import models
+import schemas
 from datetime import date, datetime
 
 # USERS
