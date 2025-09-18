@@ -1,0 +1,64 @@
+/* Дополнительные стили для App.js */
+.App {
+  text-align: center;
+}
+
+/* Анимации для свайпов */
+.card {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.card.swiping-left {
+  transform: translateX(-50px) rotate(-5deg);
+}
+
+.card.swiping-right {
+  transform: translateX(50px) rotate(5deg);
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .card {
+    padding: 20px;
+    font-size: 16px;
+  }
+  
+  .buttons {
+    gap: 10px;
+  }
+  
+  .btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+}
+
+/* Эффекты наведения */
+.btn:active {
+  transform: translateY(0);
+}
+
+/* Стили для прогресс-бара */
+.progress-bar {
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
