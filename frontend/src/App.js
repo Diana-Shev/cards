@@ -13,9 +13,11 @@ function App() {
   const [favorites, setFavorites] = useState([]);
   const [filter, setFilter] = useState('all'); // 'all' или 'favorites'
   const [goals, setGoals] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [currentGoal, setCurrentGoal] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Загрузка данных при старте
   useEffect(() => {
@@ -24,32 +26,50 @@ function App() {
 
   const loadInitialData = async () => {
     try {
+      let user;
+      
       // Создаем пользователя (если не существует)
-      const userResponse = await axios.post('/users/', { username: 'diana' });
-      setUser(userResponse.data);
+      try {
+        const userResponse = await axios.post('/users/', { username: 'diana' });
+        user = userResponse.data;
+      } catch (error) {
+        if (error.response?.status === 400) {
+          // Пользователь уже существует, получаем его данные
+          const existingUser = await axios.get('/users/');
+          user = existingUser.data.find(u => u.username === 'diana') || existingUser.data[0];
+        } else {
+          throw error;
+        }
+      }
+      
+      setUser(user);
 
       // Загружаем карточки
       const cardsResponse = await axios.get('/cards/');
+      console.log('Карточки загружены:', cardsResponse.data);
       setCards(cardsResponse.data);
 
       // Загружаем цели пользователя
-      const goalsResponse = await axios.get(`/goals/?user_id=${userResponse.data.id}`);
+      const goalsResponse = await axios.get(`/goals/?user_id=${user.id}`);
       setGoals(goalsResponse.data);
       if (goalsResponse.data.length > 0) {
         setCurrentGoal(goalsResponse.data[0]);
       }
 
       // Загружаем избранное
-      const favoritesResponse = await axios.get(`/favorites/?user_id=${userResponse.data.id}`);
+      const favoritesResponse = await axios.get(`/favorites/?user_id=${user.id}`);
       setFavorites(favoritesResponse.data);
 
       // Загружаем ответы
       if (goalsResponse.data.length > 0) {
-        const answersResponse = await axios.get(`/answers/?user_id=${userResponse.data.id}&goal_id=${goalsResponse.data[0].id}`);
+        const answersResponse = await axios.get(`/answers/?user_id=${user.id}&goal_id=${goalsResponse.data[0].id}`);
         setAnswers(answersResponse.data);
       }
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
+      console.error('Детали ошибки:', error.response?.data);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -133,6 +153,19 @@ function App() {
 
   const currentCard = getCurrentCard();
   const progress = getProgress();
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="header">
+          <h1>🎯 Мотивационные карточки</h1>
+        </div>
+        <div style={{ textAlign: 'center', color: 'white', padding: '40px' }}>
+          <h3>Загрузка...</h3>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">

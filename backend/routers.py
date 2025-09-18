@@ -19,6 +19,10 @@ def get_db():
         db.close()
 
 # USERS
+@router.get("/users/", response_model=List[schemas.User])
+def get_users(db: Session = Depends(get_db)):
+    return db.query(models.User).all()
+
 @router.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_username(db, username=user.username)
