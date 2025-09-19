@@ -2,18 +2,17 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-// Настройка базового URL для API
 const API_BASE_URL = 'http://38.244.179.25:8000';
 axios.defaults.baseURL = API_BASE_URL;
 
 function App() {
   const [currentView, setCurrentView] = useState('cards');
   const [cards, setCards] = useState([]);
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [cardQueue, setCardQueue] = useState([]); // очередь карточек для показа
+  const [currentCard, setCurrentCard] = useState(null);
   const [favorites, setFavorites] = useState([]);
-  const [filter, setFilter] = useState('all'); // 'all' или 'favorites'
-  const [goals, setGoals] = useState([]);
-  // eslint-disable-next-line no-unused-vars
+  const [filter, setFilter] = useState('all');
+  const [goals, setGoals] = useState([]); // eslint-disable-line no-unused-vars
   const [currentGoal, setCurrentGoal] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [user, setUser] = useState(null);
@@ -24,43 +23,51 @@ function App() {
     loadInitialData();
   }, []);
 
+  useEffect(() => {
+    if (filter === 'all') {
+      // При смене фильтра или загрузке карточек формируем новую очередь
+      if (cards.length > 0) {
+        setCardQueue(shuffle([...cards]));
+      }
+    } else {
+      const favCards = cards.filter(card => favorites.some(fav => fav.card_id === card.id));
+      setCardQueue(shuffle([...favCards]));
+    }
+  }, [cards, filter, favorites]);
+
+  useEffect(() => {
+    // Показываем первую карточку из очереди
+    if (cardQueue.length > 0) {
+      setCurrentCard(cardQueue[0]);
+    } else {
+      setCurrentCard(null);
+    }
+  }, [cardQueue]);
+
   const loadInitialData = async () => {
     try {
       let user;
-      
-      // Создаем пользователя (если не существует)
       try {
         const userResponse = await axios.post('/users/', { username: 'diana' });
         user = userResponse.data;
       } catch (error) {
         if (error.response?.status === 400) {
-          // Пользователь уже существует, получаем его данные
           const existingUser = await axios.get('/users/');
           user = existingUser.data.find(u => u.username === 'diana') || existingUser.data[0];
         } else {
           throw error;
         }
       }
-      
       setUser(user);
-
-      // Загружаем карточки
       const cardsResponse = await axios.get('/cards/');
-      console.log('Карточки загружены:', cardsResponse.data);
       setCards(cardsResponse.data);
-
-      // Загружаем цели пользователя
       const goalsResponse = await axios.get(`/goals/?user_id=${user.id}`);
       setGoals(goalsResponse.data);
       if (goalsResponse.data.length > 0) {
         setCurrentGoal(goalsResponse.data[0]);
       }
-
-      // Загружаем избранное
       const favoritesResponse = await axios.get(`/favorites/?user_id=${user.id}`);
       setFavorites(favoritesResponse.data);
-
-      // Загружаем ответы
       if (goalsResponse.data.length > 0) {
         const answersResponse = await axios.get(`/answers/?user_id=${user.id}&goal_id=${goalsResponse.data[0].id}`);
         setAnswers(answersResponse.data);
@@ -73,17 +80,26 @@ function App() {
     }
   };
 
-  const handleSwipe = (direction) => {
-    const currentCard = getCurrentCard();
-    if (!currentCard) return;
-
-    if (direction === 'right') {
-      // Добавляем в избранное
-      addToFavorites(currentCard.id);
+  function shuffle(array) {
+    // Фишер-Йетс для перемешивания
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
+    return arr;
+  }
 
-    // Переходим к следующей карточке
-    setCurrentCardIndex(prev => prev + 1);
+  const handleSwipe = (direction) => {
+    if (!currentCard) return;
+    if (direction === 'right') {
+      addToFavorites(currentCard.id);
+      // Добавляем понравившуюся карточку в очередь ещё раз (будет появляться чаще)
+      setCardQueue(prev => shuffle([...prev.slice(1), currentCard]));
+    } else {
+      // Просто убираем текущую карточку
+      setCardQueue(prev => prev.slice(1));
+    }
   };
 
   const addToFavorites = async (cardId) => {
@@ -91,20 +107,11 @@ function App() {
       await axios.post('/favorites/', null, {
         params: { user_id: user.id, card_id: cardId }
       });
-      // Обновляем список избранного
       const favoritesResponse = await axios.get(`/favorites/?user_id=${user.id}`);
       setFavorites(favoritesResponse.data);
     } catch (error) {
       console.error('Ошибка добавления в избранное:', error);
     }
-  };
-
-  const getCurrentCard = () => {
-    const filteredCards = filter === 'favorites' 
-      ? cards.filter(card => favorites.some(fav => fav.card_id === card.id))
-      : cards;
-    
-    return filteredCards[currentCardIndex] || null;
   };
 
   const createGoal = async (goalData) => {
@@ -122,7 +129,6 @@ function App() {
 
   const answerDailyQuestion = async (isYes) => {
     if (!currentGoal) return;
-
     try {
       const today = new Date().toISOString().split('T')[0];
       await axios.post('/answers/', {
@@ -132,8 +138,6 @@ function App() {
       }, {
         params: { user_id: user.id }
       });
-
-      // Обновляем ответы
       const answersResponse = await axios.get(`/answers/?user_id=${user.id}&goal_id=${currentGoal.id}`);
       setAnswers(answersResponse.data);
     } catch (error) {
@@ -141,17 +145,20 @@ function App() {
     }
   };
 
+  // Прогресс-бар: процент = (кол-во дней с ответом Да) / (все дни между созданием и датой цели)
   const getProgress = () => {
-    if (!currentGoal || answers.length === 0) return 0;
+    if (!currentGoal) return 0;
+    const createdAt = new Date(currentGoal.created_at);
+    const targetDate = new Date(currentGoal.target_date);
+    const today = new Date();
+    // Считаем только дни до сегодняшнего дня или до targetDate (что меньше)
+    const lastDay = today < targetDate ? today : targetDate;
+    const totalDays = Math.ceil((lastDay - createdAt) / (1000 * 60 * 60 * 24)) + 1;
+    if (totalDays <= 0) return 0;
     const yesAnswers = answers.filter(answer => answer.is_yes).length;
-    return Math.round((yesAnswers / answers.length) * 100);
+    return Math.min(100, Math.round((yesAnswers / totalDays) * 100));
   };
 
-  const resetCards = () => {
-    setCurrentCardIndex(0);
-  };
-
-  const currentCard = getCurrentCard();
   const progress = getProgress();
 
   if (loading) {
@@ -171,8 +178,18 @@ function App() {
     <div className="container">
       <div className="header">
         <h1>🎯 Мотивационные карточки</h1>
+        {currentGoal && (
+          <div style={{ color: 'white', marginTop: 10, fontWeight: 'bold' }}>
+            Цель: {currentGoal.text} (до {new Date(currentGoal.target_date).toLocaleDateString('ru-RU')})
+          </div>
+        )}
       </div>
-
+      <div className="progress-bar" style={{ marginTop: 10 }}>
+        <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+      </div>
+      <div style={{ color: 'white', textAlign: 'right', fontWeight: 'bold', marginBottom: 10 }}>
+        Прогресс: {progress}%
+      </div>
       <div className="navigation">
         <button 
           className={`nav-btn ${currentView === 'cards' ? 'active' : ''}`}
@@ -193,7 +210,6 @@ function App() {
           Вопрос дня
         </button>
       </div>
-
       {currentView === 'cards' && (
         <div>
           <div className="filters">
@@ -210,13 +226,11 @@ function App() {
               Избранное
             </button>
           </div>
-
           {currentCard ? (
             <div>
               <div className="card">
                 {currentCard.text}
               </div>
-              
               <div className="buttons">
                 <button 
                   className="btn btn-skip"
@@ -231,23 +245,21 @@ function App() {
                   ⭐ В избранное
                 </button>
               </div>
-
               <div style={{ textAlign: 'center', color: 'white', marginTop: '20px' }}>
-                {currentCardIndex + 1} из {filter === 'favorites' ? favorites.length : cards.length}
+                Осталось: {cardQueue.length}
               </div>
             </div>
           ) : (
             <div className="empty-state">
               <h3>Карточки закончились!</h3>
               <p>Нажмите кнопку ниже, чтобы начать заново</p>
-              <button className="btn btn-like" onClick={resetCards}>
+              <button className="btn btn-like" onClick={() => setCardQueue(shuffle([...cards]))}>
                 Начать заново
               </button>
             </div>
           )}
         </div>
       )}
-
       {currentView === 'goal' && (
         <div>
           {currentGoal ? (
@@ -256,7 +268,6 @@ function App() {
                 <h3>Ваша цель:</h3>
                 <p>{currentGoal.text}</p>
                 <p><strong>Дата достижения:</strong> {new Date(currentGoal.target_date).toLocaleDateString('ru-RU')}</p>
-                
                 <div className="progress-bar">
                   <div 
                     className="progress-fill" 
@@ -271,12 +282,10 @@ function App() {
           )}
         </div>
       )}
-
       {currentView === 'question' && currentGoal && (
         <div className="daily-question">
           <h3>Ежедневный вопрос</h3>
           <p>Ты сегодня продвинулся к цели "{currentGoal.text}"?</p>
-          
           <div className="question-buttons">
             <button 
               className="btn btn-yes"
@@ -291,7 +300,6 @@ function App() {
               Нет ❌
             </button>
           </div>
-
           <div className="progress-bar" style={{ marginTop: '20px' }}>
             <div 
               className="progress-fill" 
@@ -330,7 +338,6 @@ function GoalForm({ onCreateGoal }) {
             required
           />
         </div>
-        
         <div className="form-group">
           <label>Дата достижения:</label>
           <input
@@ -340,7 +347,6 @@ function GoalForm({ onCreateGoal }) {
             required
           />
         </div>
-        
         <button type="submit" className="btn btn-like">
           Создать цель
         </button>
