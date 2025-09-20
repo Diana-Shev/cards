@@ -1,35 +1,36 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { View, Text, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Provider as PaperProvider } from 'react-native-paper';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
-import MainScreen from './src/screens/MainScreen';
-import GoalsScreen from './src/screens/GoalsScreen';
-import { theme } from './src/theme/theme';
-
-const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <PaperProvider theme={theme}>
-        <NavigationContainer>
-          <StatusBar style="auto" />
-          <Stack.Navigator
-            initialRouteName="Main"
-            screenOptions={{
-              headerShown: false,
-              gestureEnabled: true,
-              gestureDirection: 'horizontal',
-            }}
-          >
-            <Stack.Screen name="Main" component={MainScreen} />
-            <Stack.Screen name="Goals" component={GoalsScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </PaperProvider>
-    </GestureHandlerRootView>
+    <View style={styles.container}>
+      <StatusBar style="auto" />
+      <Text style={styles.title}>Мотивационные карточки</Text>
+      <Text style={styles.subtitle}>Мобильное приложение готово к разработке!</Text>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+});

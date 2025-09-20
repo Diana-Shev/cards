@@ -30,9 +30,7 @@
     },
     "plugins": [
       "expo-document-picker",
-      "expo-file-system",
-      "expo-haptics",
-      "expo-notifications"
+      "expo-file-system"
     ],
     "extra": {
       "eas": {
