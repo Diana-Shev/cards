@@ -11,8 +11,7 @@ __pycache__/
 *.pyd
 *.db
 *.sqlite3
-backend/
-.env
+backend/.env
 
 # IDE / Editor
 .vscode/
