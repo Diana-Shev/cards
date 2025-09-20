@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Мотивационные карточки",
+    "slug": "motivation-cards",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f8fafc"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.motivationcards.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#f8fafc"
+      },
+      "package": "com.motivationcards.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-document-picker",
+      "expo-file-system",
+      "expo-haptics",
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}

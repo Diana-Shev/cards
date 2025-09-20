@@ -10,10 +10,12 @@ import models
 
 app = FastAPI(title="Мотивационные карточки")
 
-# Добавляем CORS для работы с frontend
+# Добавляем CORS для работы с frontend и мобильным приложением
+from mobile_config import MOBILE_CORS_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Разрешаем локальный frontend
+    allow_origins=MOBILE_CORS_ORIGINS,  # Разрешаем локальный frontend и мобильное приложение
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
