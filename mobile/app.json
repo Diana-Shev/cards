@@ -15,13 +15,9 @@
     "android": {
       "package": "com.motivationcards.app"
     },
-    "plugins": [
-      "expo-document-picker",
-      "expo-file-system"
-    ],
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "motivation-cards-app"
       }
     }
   }
