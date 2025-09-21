@@ -23,6 +23,10 @@ def get_db():
 def get_users(db: Session = Depends(get_db)):
     return db.query(models.User).all()
 
+@router.get("/users", response_model=List[schemas.User])
+def get_users_no_slash(db: Session = Depends(get_db)):
+    return db.query(models.User).all()
+
 @router.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_username(db, username=user.username)
@@ -42,6 +46,10 @@ def get_goals(user_id: int, db: Session = Depends(get_db)):
 # CARDS
 @router.get("/cards/", response_model=List[schemas.Card])
 def get_cards(skip: int = 0, limit: int = 30, db: Session = Depends(get_db)):
+    return crud.get_cards(db=db, skip=skip, limit=limit)
+
+@router.get("/cards", response_model=List[schemas.Card])
+def get_cards_no_slash(skip: int = 0, limit: int = 30, db: Session = Depends(get_db)):
     return crud.get_cards(db=db, skip=skip, limit=limit)
 
 # FAVORITES

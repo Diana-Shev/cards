@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000'; // Замените на ваш URL бэкенда
+const API_BASE_URL = 'http://38.244.179.25:8000'; // Ваш URL бэкенда
 
 class ApiService {
   constructor() {
